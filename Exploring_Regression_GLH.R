@@ -1,5 +1,5 @@
 #' ---
-#' title: "MATH 4039: Exploring Regression with Linear Hypotheses"
+#' title: "MATH 4939: Exploring Regression with Linear Hypotheses"
 #' author: "Georges Monette"
 #' date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
 #' output:
@@ -9,26 +9,52 @@
 #' ---
 #' Generated:
 {{format(Sys.time(), '%H:%M %d %B %Y')}}
-#' <!--
+#' <!-- This is an example of an invisible note in HTML.
+#' (Unfortunately this trick doesn't work for pdf files.)
+#' To Do: Reorganize GLH and add graphs to illustrate
+#' Use gpanel.fit
+#' 
 #' History:
 #' - 2016-01-15: First version
 #' -->
 #' 
+#' ## Introduction
+#' 
+#' This 'html-flavoured' [R Markdown](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf) script illustrates a number of skills
+#' and concepts you should master to analyze data using
+#' regression in R. 
+#' 
+#' 1. Formulating and interpreting models with 
+#'    interaction terms.
+#' 2. Graphical diagnostics using various residual plots,
+#'    leverage plots and added-variable plots.
+#' 3. Using lattice graphics to display the model and data.
+#' 4. Refining lattice graphics for presentations.
+#' 5. Formulating specific questions and addressing them
+#'    with linear hypotheses and estimators.
+#' 6. Dealing with heteroscedasticity: transforming the 
+#'    response or adapting the model. In this example
+#'    we illustrate how to use a generalized least-squares
+#'    fit using the 'gls' function in the 'nlme' package.
+#' 
 #' ## Exploring Regressions with Linear Hypotheses
 #' 
 #' This script illustrates the use of the general
-#' linear hypothesis (GLH) to explore and interpret 
+#' linear hypothesis (GLH) and corresponding linear
+#' estimators to explore and interpret 
 #' regression analyses. Linear hypotheses allow us to
 #' formulate and test many types of specific questions
 #' about the subject matter of the study.
 #' 
-#' Each estimated coefficient of in a 
-#' standard regression answers 
+#' Each estimated coefficient that appears in the usual
+#' output of a regression answers 
 #' a specific question about the data through the model.
-#' However, when you take the effort to carefully 
+#' 
+#' However, when you carefully 
 #' interpret estimated coefficients, you often find that
-#' the coefficient is of little or no interest in 
-#' understanding the substance of the study. Conversely,
+#' most of them are of little or no interest in 
+#' understanding the substance of the study. 
+#' Conversely,
 #' most questions of real interest are not answered directly
 #' through the estimated coefficients.
 #' 
@@ -43,46 +69,61 @@
 #' designed to make it easier to find
 #' answers to many common questions involving 
 #' linear hypotheses.  For more complex questions, 
-#' it can be used with the 'Lfx' function that
-#' helps you construct linear hypothesis matrices.
+#' it can be used with the 'Lfx' function to
+#' construct linear hypothesis matrices.
 #' 
-#' Linear hypotheses for models using generalized 
+#' Linear hypotheses for models using general 
 #' parametric splines 
-#' (using the 'gsp' function) can be generated with 
+#' (using the 'gsp' function in 'yscs') can 
+#' be generated with 
 #' the 'sc' function.
 #' 
-#' In SAS, in PROC GLM, linear hypotheses are generated with the 
+#' Note that in SAS, in PROC GLM, linear 
+#' hypotheses are generated with the 
 #' ['ESTIMATE' and 'CONTRAST' statements](https://support.sas.com/resources/papers/proceedings11/351-2011.pdf). 
 #' 
 #' ## Initial setup (this part would be hidden in a report)
 #' 
 #' We first set up some options. This is optional.
 #' 
-#' If you get an error that a package is not installed
-#' just install it with:
-#' <!-- This is an example of a chunk with option: eval=FALSE
-#' so the R commands are not executed when the script
-#' is compiled (using Ctrl-Shift-K in Rstudio)
-#' to make an output file -->
-#+ eval=FALSE
-install.packages("<name of package>") 
 #' <!-- 
-#' And the following is a chunk we 'evaluate' 
-#' but we don't show the messy code
-#' 'opts' is just an optional name for the chunk. 
-#' Chunk names, if you use them must be 
-#' unique: often a pain in the neck 
+#'   And the following is a chunk we 'evaluate' 
+#'   but we don't show the messy code
+#'   'opts' is just an optional name for the chunk. 
+#'   Chunk names, if you use them must be 
+#'   unique: often a pain in the neck 
 #' -->
 #+ opts,echo=FALSE
 library(knitr)  # this is the library used to generate documents
 opts_knit$set(width=100)
 options(width=100)
-# The 'comment' argument is the string that precedes any output in the document
+# The 'comment' argument is the string 
+# that precedes any output in the document.
+# The default is '##' which I find ugly but it's conventional
+# Since output is shown in a shaded box, I find that 
+# adequate as an  indicator that we are looking
+# at output.  Your opinion may differ.
 opts_chunk$set(tidy=FALSE,comment='  ',fig.height=8,fig.width=10)
 #'
-#'
-#' ## Loading some packages
+#' ## Loading packages
 #' 
+#' The first few time you use this script, you need to execute
+#' it line by line to try to understand as much of it as
+#' possible and to install any packages that need to be
+#' installed.
+#' 
+#' If you get an error that a package is not installed
+#' just install it with:
+#' <!-- 
+#'    The following 
+#'    is an example of a chunk with option: eval=FALSE
+#'    so the R commands are not executed when the script
+#'    is compiled (using Ctrl-Shift-K in Rstudio)
+#'    to make an output file 
+#' -->
+#+ eval=FALSE
+install.packages("<name of package>") 
+# where you substitute the <name of the package> to install
 #' Much of the really interesting work in R uses specialized packages. 
 #' 'Mature' packages are usually uploaded to 'CRAN' and can be installed with, for example:
 #+ eval=FALSE
@@ -92,8 +133,10 @@ install.packages('car')
 #' for example:
 #+ eval=FALSE
 devtools::install_github('gmonette/yscs')
-#' 
-#' Here are the packages we will install for this script.
+#' Once a package is installed, you use it in an R session with the
+#' 'library' function.
+#'  
+#' Here are the packages we will need for this script.
 #' Note that you can install each package anywhere in the script before
 #' you actually need to use the functions or data in the package.
 #' To get information on a package, use, for example:
@@ -102,27 +145,26 @@ help(package=yscs)
 #' 
 library(yscs) # devtools::install_github('gmonette/yscs')
 library(p3d)  # devtools::install_github('gmonette/p3d')
-library(lattice)
+library(lattice) # for graphs with panels
 library(latticeExtra) # to combine plots together
 library(gridExtra)  # for grid.arrange
 library(magrittr) # for function pipelines
-library(car) #'Companion to Applied Regression by John Fox
+library(car) # Companion to Applied Regression by John Fox
+library(nlme) # for the 'gls' function 
 #'
 #' ## Exploring the Prestige data set
 #' 
-#' 
 #' The 'Prestige' data set is in the car package so it's 
-#' easy to load -- in contrast with typical data where 
-#' you have to spend a lot of effort getting the data in shape
+#' easy to load -- in contrast with typical data sets where 
+#' most of your effort is spent getting the data in shape.
 #' 
 data(Prestige)  # with some packages you need to do this to 'load' the data frame
-#+ eval=FALSE
+#+ eval=FALSE,echo=FALSE
 ?Prestige # this won't show in the document
-#+
+#' A quick look at the data set:
 dim(Prestige)
 head(Prestige)
 xqplot(Prestige) 
-#' 
 #' I find 'xqplot' invaluable for quick exploration but don't use it for polished reports or presentations.
 #'
 #' ### Regression of income on education and gender
@@ -211,8 +253,47 @@ Fit3d(fitq) # shows how quads don't extrapolate here
 #' 1. How many parameters do we have? 
 #' 2. How many observations? 
 #' 3. Is the ratio reasonable? 
-#' 4. How should we handle the large variance of residuals at the higher predicted incomes?
+#' 4. How should we handle the large standard deviation of residuals at the higher levels of predicted incomes?
+#'    - transform the response? e.g. log(income) which would allow us to estimate the proportional
+#'      'effect' of a change in x. 
+#'    - 
 #' 5. Should we simplify the model?
+#'
+xyplot( income ~ education | cut(women,5), Prestige, groups = type)
+# we get a more even distribution with cut by using a transformation of a more uniformly distributed variable
+xyplot( income ~ education | cut(log(women+1),5), Prestige, groups = type)
+#'
+#' The following commands will look very complex but there's a logic behind them.
+#' 'Base graphics' are much easier to add to but they don't have panels. 
+#' 'Lattice graphics' are much nicer in many ways but it is much more difficult
+#' to add overlays.  The way I do things here, with 'latticeExtra' is a bit old-fashioned. 
+#' The trendy
+#' way is to use 'ggplot2' but I'm waiting for the next great thing to mature.
+#' My bets are on 'ggvis' by Winston Chang to which I plan to convert as soon
+#' as they decide to include panels (also called 'facets').
+#' 
+xyplot( income ~ education | cut(log(women+1),5), 
+        Prestige, 
+        groups = type,
+        occ = rownames(Prestige)) + 
+  glayer({ok <- (y > 10000); panel.text(x[ok],y[ok],occ[subscripts][ok],adj=1.1)})
+
+
+Prestige$Type <- tr(Prestige$type,c("bc","wc","prof"),c('blue collar','white collar','professional'))
+Prestige$Type <- with(Prestige, reorder(Type, education))
+gd(col = c('blue','orange','green'), lwd = 2, lty = 1)
+xyplot( income ~ education | cut(women,c(-1,0,5,10,25,101)), 
+        Prestige, 
+        groups = Type, subscripts = TRUE,
+        occ = rownames(Prestige), 
+        women = Prestige$women,
+        auto.key = list(columns = 3, lines = T)) + 
+  glayer({ok <- (y > 10000); panel.text(x[ok], y[ok], occ[subscripts][ok], adj=1.1)}) +
+  glayer({ok <- (women[subscripts] < 1); panel.text(x[ok],y[ok],occ[subscripts][ok], adj=-0.1)}) +
+  layer(panel.lmline(..., lwd = 2))+
+  glayer(panel.lmline(..., col = 'blue', lty=3))
+
+  
 #'
 #' We will use the 'gls' (generalized least-squares) 
 #' function in the 'nlme' package to incorporate 
@@ -237,9 +318,20 @@ plot(fit, id = .1, idLabels = ~ occ)  # default not as much as with 'lm' but fit
 #' Depending on circumstances, this could be addressed in
 #' many ways some of which are:
 #' 
-#' 1. Perhaps the large residuals are anomalous or consequences of a process not included in the model. They could be segregated or the model enlarged to predict their value.
-#' 2. Perhaps the natural model should be based on a transformation of the response or of the predictors.  A transformation will sometimes restore linearity and homoscedasticity.  Find a good reference on Tukey's ladder of powers.  But don't transform mechanically. If the relationship is not linear, often you want to use a model that is not linear in the predictors, or even not linear in the parameters.
-#' 3. Perhaps it makes sense to have larger variance at higher predicted values and the model should incorporate a term to allow for heteroscedasticity. This is what we pursue below with 'gls' in the 'nlme' package.
+#' 1. Perhaps the large residuals are anomalous or consequences of a process 
+#'    not included in the model. They could be segregated or the model 
+#'    enlarged to predict their value.
+#' 2. Perhaps the natural model should be based on a transformation 
+#'    of the response or of the predictors.  
+#'    A transformation will sometimes restore linearity and homoscedasticity.  
+#'    Find a good reference on Tukey's ladder of powers.  
+#'    But don't transform mechanically. 
+#'    If the relationship is not linear, often you want to use 
+#'    a model that is not linear in the predictors, or 
+#'    even not linear in the parameters.
+#' 3. Perhaps it makes sense to have larger variance at 
+#'    higher predicted values and the model should incorporate 
+#'    a term to allow for heteroscedasticity. This is what we pursue below with 'gls' in the 'nlme' package.
 #'
 fit2 <- gls(income ~ education * women * type, Prestige, 
             weights = varPower(form = ~fitted(.)),
@@ -262,11 +354,13 @@ wald(fit2, 'type')  # does type add to other variables?
 wald(fit2, 'women') # etc ...
 wald(fit2, 'education')
 #'
-#' Perhaps 'type' is almost equivalent to categorical version of 'education'.
+#' Perhaps 'type' is almost equivalent to a categorical version of 'education'.
 #' I will keep it nevertheless to illustrate estimation with a categorical variable.
 #'  
 #' #### Two-way interaction model:
 #' 
+#' To allow all interactions up to two-way interactions, you can use the 
+#' notation below. 
 fit3 <- gls(income ~ (education + women + type)^2, Prestige, 
             weights = varPower(form = ~fitted(.)),
             na.action = na.omit)
@@ -281,9 +375,13 @@ plot(fit3, resid(.,type='p') ~ education,
 fit3q <- update(fit3, . ~ type * (education * women + I(education^2) +I(women^2)))
 summary(fit3q)
 #'
-#' **Exercise:** Have a look at diagnostics?
+#' **Exercise:** Have a look at diagnostics and describe what they tell you.
 #' 
 #' #### Model formulas in R
+#' 
+#' I had trouble finding a good discussion of model formulas in the text book.
+#' Here's a link to a [page with some information](http://science.nature.nps.gov/im/datamgmt/statistics/r/formulas/).
+#' You can also get help in R with '?formula'.
 #' 
 #' Where in the textbook would you find the interpretation of the following
 #' terms in the predictor formula:
